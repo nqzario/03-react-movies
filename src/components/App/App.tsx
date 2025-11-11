@@ -1,47 +1,71 @@
-import css from "./App.module.css";
-import CafeInfo from "../CafeInfo/CafeInfo";
-import VoteOptions from "../VoteOptions/VoteOptions";
-import VoteStats from "../VoteStats/VoteStats";
-import Notification from "../Notification/Notification";
 import { useState } from "react";
-import type { Votes, VoteType } from "../../types/votes";
-
+import MovieModal from "../MovieModal/MovieModal";
+import toast, { Toaster } from "react-hot-toast";
+import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import SearchBar from "../SearchBar/SearchBar";
+import MovieGrid from "../MovieGrid/MovieGrid";
+import axios from "axios";
+import type { Movie } from "../../types/movie";
+import Loader from "../Loader/Loader";
 function App() {
-  const [votes, setVotes] = useState<Votes>({ good: 0, neutral: 0, bad: 0 });
+  const token = import.meta.env.VITE_TMDB_TOKEN;
 
-  function handleVote(type: VoteType) {
-    setVotes((prevVotes) => ({
-      ...prevVotes,
-      [type]: prevVotes[type] + 1,
-    }));
-  }
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loader, setLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const handleClick = (movie: Movie) => {
+    setSelectedMovie(movie);
+  };
+  const handleSearch = async (query: string) => {
+    setLoading(true);
+    setMovies([]);
 
-  function resetVotes() {
-    setVotes({ good: 0, neutral: 0, bad: 0 });
-  }
-  const totalVotes = votes.bad + votes.good + votes.neutral;
-  const positiveRate =
-    votes.bad + votes.good + votes.neutral
-      ? Math.round((votes.good / totalVotes) * 100)
-      : 0;
+    try {
+      const params = {
+        params: {
+          query,
+          language: "en-US",
+          page: 1,
+        },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      const res = await axios.get(
+        "https://api.themoviedb.org/3/search/movie",
+        params
+      );
+      setHasError(false);
+      if (res.data.results.length === 0) {
+        toast.error("No movies found for your request.");
+      }
+
+      setMovies(res.data.results);
+    } catch (err) {
+      toast.error("Error fetching movies.");
+      setHasError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className={css.app}>
-      <CafeInfo />
-
-      <VoteOptions
-        onVote={handleVote}
-        onReset={resetVotes}
-        canReset={totalVotes > 0}
-      />
-
-      {totalVotes > 0 ? (
-        <VoteStats
-          votes={votes}
-          totalVotes={totalVotes}
-          positiveRate={positiveRate}
-        />
+    <div>
+      <SearchBar onSubmit={handleSearch} />
+      {loader ? (
+        <Loader />
+      ) : hasError ? (
+        <ErrorMessage />
       ) : (
-        <Notification />
+        <MovieGrid movies={movies} onSelect={handleClick} />
+      )}
+      {selectedMovie && (
+        <MovieModal
+          movie={selectedMovie}
+          onClose={() => setSelectedMovie(null)}
+        />
       )}
     </div>
   );
