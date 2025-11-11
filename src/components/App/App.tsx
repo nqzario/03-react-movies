@@ -1,6 +1,6 @@
 import { useState } from "react";
 import MovieModal from "../MovieModal/MovieModal";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
