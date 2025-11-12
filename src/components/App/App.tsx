@@ -9,8 +9,6 @@ import type { Movie } from "../../types/movie";
 import fetchMovies from "../../services/movieService";
 
 function App() {
-  const token = import.meta.env.VITE_TMDB_TOKEN;
-
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loader, setLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -25,7 +23,7 @@ function App() {
     setMovies([]);
 
     try {
-      const results = await fetchMovies(query, token);
+      const results = await fetchMovies(query);
       setHasError(false);
 
       if (results.length === 0) {
